@@ -54,52 +54,20 @@ class HBNBCommand(cmd.Cmd):
                 new_dict[key] = value
         return new_dict
 
-    class HBNBCommand(BaseModel):
-    prompt = "(hbnb) "
-
     def do_create(self, arg):
-        """Create a new instance of BaseModel, save it to JSON file, and print the ID."""
-        if not arg:
+        """Creates a new instance of a class"""
+        args = arg.split()
+        if len(args) == 0:
             print("** class name missing **")
-            return
-
-        args = re.split(r"[,=]", arg)
-        class_name = args[0].strip()
-
-        if class_name not in storage.classes:
+            return False
+        if args[0] in classes:
+            new_dict = self._key_value_parser(args[1:])
+            instance = classes[args[0]](**new_dict)
+        else:
             print("** class doesn't exist **")
-            return
-
-        params = {}
-        for i in range(1, len(args), 2):
-            key = args[i].strip()
-            value = args[i + 1].strip()
-
-            # Check if value is a string
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1].replace("_", " ").replace('\\"', '"')
-
-            # Check if value is a float
-            elif "." in value:
-                try:
-                    value = float(value)
-                except ValueError:
-                    print(f"Error: Invalid float value for parameter {key}")
-                    return
-
-            # Check if value is an integer
-            else:
-                try:
-                    value = int(value)
-                except ValueError:
-                    print(f"Error: Invalid integer value for parameter {key}")
-                    return
-
-            params[key] = value
-
-        new_instance = storage.classes[class_name](**params)
-        new_instance.save()
-        print(new_instance.id)
+            return False
+        print(instance.id)
+        instance.save()
 
     def do_show(self, arg):
         """Prints an instance as a string based on the class and id"""
