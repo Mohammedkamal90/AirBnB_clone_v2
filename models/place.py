@@ -11,20 +11,13 @@ place_amenity = Table('place_amenity', Base.metadata,
 class Place(BaseModel, Base):
     __tablename__ = 'places'
     if models.storage_type == 'db':
-        amenities = relationship("Amenity", secondary="place_amenity", viewonly=False)
+        reviews = relationship("Review", cascade="all, delete", back_populates="place")
     else:
         @property
-        def amenities(self):
-            """Getter attribute that returns the list of Amenity instances based on the attribute amenity_ids."""
-            amenities_list = []
-            for amenity_id in self.amenity_ids:
-                amenity = models.storage.get('Amenity', amenity_id)
-                if amenity:
-                    amenities_list.append(amenity)
-            return amenities_list
-
-        @amenities.setter
-        def amenities(self, amenity):
-            """Setter attribute that handles the append method for adding an Amenity.id to the attribute amenity_ids."""
-            if isinstance(amenity, models.Amenity):
-                self.amenity_ids.append(amenity.id)
+        def reviews(self):
+            """Getter attribute that returns the list of Review instances with place_id equals to the current Place.id."""
+            reviews_list = []
+            for review in models.storage.all('Review').values():
+                if review.place_id == self.id:
+                    reviews_list.append(review)
+            return reviews_list
