@@ -54,41 +54,52 @@ class HBNBCommand(cmd.Cmd):
                 new_dict[key] = value
         return new_dict
 
+    class HBNBCommand(BaseModel):
+    prompt = "(hbnb) "
+
     def do_create(self, arg):
-        classname = arg[0]
-    if classname not in storage.classes():
-        print("** class doesn't exist **")
-        return False
+        """Create a new instance of BaseModel, save it to JSON file, and print the ID."""
+        if not arg:
+            print("** class name missing **")
+            return
 
-    params = {}
-    for param in arg[1:]:
-        key, value = param.split("=", 1)
-        key = key.strip()
-        value = value.strip()
+        args = re.split(r"[,=]", arg)
+        class_name = args[0].strip()
 
-        if value.startswith('"') and value.endswith('"'):
-            value = value[1:-1]
-            value = value.replace("\\", "")
-            value = value.replace("_", " ")
-        elif "." in value:
-            value = float(value)
-        else:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
+        if class_name not in storage.classes:
+            print("** class doesn't exist **")
+            return
 
-        params[key] = value
+        params = {}
+        for i in range(1, len(args), 2):
+            key = args[i].strip()
+            value = args[i + 1].strip()
 
-    try:
-        obj = storage.create(classname, **params)
-        print(obj.id)
-        storage.save()
-    except Exception as e:
-        print(e)
-        return False
+            # Check if value is a string
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1].replace("_", " ").replace('\\"', '"')
 
-    return True
+            # Check if value is a float
+            elif "." in value:
+                try:
+                    value = float(value)
+                except ValueError:
+                    print(f"Error: Invalid float value for parameter {key}")
+                    return
+
+            # Check if value is an integer
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    print(f"Error: Invalid integer value for parameter {key}")
+                    return
+
+            params[key] = value
+
+        new_instance = storage.classes[class_name](**params)
+        new_instance.save()
+        print(new_instance.id)
 
     def do_show(self, arg):
         """Prints an instance as a string based on the class and id"""
