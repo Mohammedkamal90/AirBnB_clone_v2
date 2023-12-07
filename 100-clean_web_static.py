@@ -2,48 +2,89 @@
 """
 Fabric script that deletes out-of-date archives using the function do_clean.
 """
-from fabric.api import env, local, run
+import os
 from datetime import datetime
-from os.path import exists
+from fabric.api import env, local, put, run, runs_once
 
-# Define the environment (web servers)
-env.hosts = ['<IP web-01>', '<IP web-02>']
-env.user = 'ubuntu'  # Set the username for SSH
+
+@runs_once
+def do_pack():
+    """Archives the static files."""
+    if not os.path.isdir("versions"):
+        os.mkdir("versions")
+    cur_time = datetime.now()
+    output = "versions/web_static_{}{}{}{}{}{}.tgz".format(
+        cur_time.year,
+        cur_time.month,
+        cur_time.day,
+        cur_time.hour,
+        cur_time.minute,
+        cur_time.second
+    )
+    try:
+        print("Packing web_static to {}".format(output))
+        local("tar -cvzf {} web_static".format(output))
+        archize_size = os.stat(output).st_size
+        print("web_static packed: {} -> {} Bytes".format(output, archize_size))
+    except Exception:
+        output = None
+    return output
+
+
+def do_deploy(archive_path):
+    """Deploys the static files to the host servers.
+    Args:
+        archive_path (str): The path to the archived static files.
+    """
+    if not os.path.exists(archive_path):
+        return False
+    file_name = os.path.basename(archive_path)
+    folder_name = file_name.replace(".tgz", "")
+    folder_path = "/data/web_static/releases/{}/".format(folder_name)
+    success = False
+    try:
+        put(archive_path, "/tmp/{}".format(file_name))
+        run("mkdir -p {}".format(folder_path))
+        run("tar -xzf /tmp/{} -C {}".format(file_name, folder_path))
+        run("rm -rf /tmp/{}".format(file_name))
+        run("mv {}web_static/* {}".format(folder_path, folder_path))
+        run("rm -rf {}web_static".format(folder_path))
+        run("rm -rf /data/web_static/current")
+        run("ln -s {} /data/web_static/current".format(folder_path))
+        print('New version deployed!')
+        success = True
+    except Exception:
+        success = False
+    return success
+
+
+def deploy():
+ # Delete unnecessary archives in the versions folder
+
+    archive_path = do_pack()
+    return do_deploy(archive_path) if archive_path else False
+
 
 def do_clean(number=0):
-    """
-    Deletes out-of-date archives.
-
+    """Deletes out-of-date archives of the static files.
     Args:
-        number (int): The number of archives to keep. Default is 0.
-
-    Returns:
-        None
+        number (Any): The number of archives to keep.
     """
-    number = int(number)
-
-    # Get the list of archives in the versions folder
-    local_archives = local("ls -1tr versions", capture=True).split("\n")
-
-    # Keep only the most recent 'number' archives
-    archives_to_keep = local_archives[-number:]
-    archives_to_delete = local_archives[:-number]
-
-    # Delete unnecessary archives in the versions folder
-    for archive in archives_to_delete:
-        local("rm -f versions/{}".format(archive))
-
-    # Get the list of archives in the /data/web_static/releases folder on the web servers
-    remote_archives = run("ls -1tr /data/web_static/releases", capture=True).split("\n")
-
-    # Keep only the most recent 'number' archives on the web servers
-    remote_archives_to_keep = remote_archives[-number:]
-    remote_archives_to_delete = remote_archives[:-number]
-
-    # Delete unnecessary archives in the /data/web_static/releases folder on the web servers
-    for archive in remote_archives_to_delete:
-        run("rm -rf /data/web_static/releases/{}".format(archive))
-
-if __name__ == "__main__":
-    # Example command to clean archives, keeping the most recent 2
-    do_clean(number=2)
+    archives = os.listdir('versions/')
+    archives.sort(reverse=True)
+    start = int(number)
+    if not start:
+        start += 1
+    if start < len(archives):
+        archives = archives[start:]
+    else:
+        archives = []
+    for archive in archives:
+        os.unlink('versions/{}'.format(archive))
+    cmd_parts = [
+        "rm -rf $(",
+        "find /data/web_static/releases/ -maxdepth 1 -type d -iregex",
+        " '/data/web_static/releases/web_static_.*'",
+        " | sort -r | tr '\\n' ' ' | cut -d ' ' -f{}-)".format(start + 1)
+    ]
+    run(''.join(cmd_parts))
