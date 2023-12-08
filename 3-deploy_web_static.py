@@ -1,44 +1,65 @@
 #!/usr/bin/python3
 """
-Fabric script that creates and distributes an archive to your web servers using function deploy.
+Fabric script (based on the file 2-do_deploy_web_static.py)
 """
-from fabric.api import env, local
+from fabric.api import local, put, env, run
 from os.path import exists
 from datetime import datetime
 
-# Import do_pack and do_deploy functions
-from 1-pack_web_static import do_pack
-from 2-do_deploy_web_static import do_deploy
-
-# Define the environment (web servers)
 env.hosts = ['<IP web-01>', '<IP web-02>']
-env.user = 'ubuntu'  # Set the username for SSH
 
-def deploy():
+
+def do_pack():
     """
-    Creates and distributes an archive to the web servers, deploying the new version.
-
-    Returns:
-        (bool): True if successful, False otherwise.
+    Generates a .tgz archive from the contents of the web_static folder
     """
-    # Call do_pack and store the path of the created archive
-    archive_path = do_pack()
+    try:
+        local("mkdir -p versions")
+        current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+        file_path = "versions/web_static_{}.tgz".format(current_time)
+        local("tar -cvzf {} web_static".format(file_path))
+        return file_path
+    except:
+        return None
 
-    # Return False if no archive has been created
-    if not archive_path:
+
+def do_deploy(archive_path):
+    """
+    Distributes an archive to your web servers
+    """
+    if not exists(archive_path):
         return False
 
     try:
-        # Call do_deploy using the new path of the new archive
-        return do_deploy(archive_path)
-    except Exception as e:
-        print(e)
+        # Upload the archive
+        put(archive_path, "/tmp/")
+
+        # Extract the archive
+        file_name = archive_path.split("/")[-1]
+        folder_name = file_name.split(".")[0]
+        release_path = "/data/web_static/releases/{}".format(folder_name)
+        run("mkdir -p {}".format(release_path))
+        run("tar -xzf /tmp/{} -C {}".format(file_name, release_path))
+
+        # Move the contents to the final location
+        run("mv {}/web_static/* {}".format(release_path, release_path))
+
+        # Remove the symbolic link and create a new one
+        run("rm -rf /data/web_static/current")
+        run("ln -s {} /data/web_static/current".format(release_path))
+
+        print("New version deployed!")
+        return True
+    except:
         return False
 
-if __name__ == "__main__":
-    # Example command to deploy
-    result = deploy()
-    if result:
-        print("Deployment successful!")
-    else:
-        print("Deployment failed.")
+
+def deploy():
+    """
+    Creates and distributes an archive to your web servers
+    """
+    archive_path = do_pack()
+    if not archive_path:
+        return False
+
+    return do_deploy(archive_path)
