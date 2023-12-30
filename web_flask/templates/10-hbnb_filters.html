@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>HBNB Filters</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/3-header.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/3-footer.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/4-common.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/6-filters.css') }}" type="text/css">
+</head>
+<body>
+    <header class="full_header">
+        <div class="title">
+            <h1>HBNB</h1>
+        </div>
+    </header>
+    <div class="container">
+        <section class="filters">
+            <h3>States</h3>
+            <div class="popover">
+                {% for state in states %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" class="filter_checkbox" data-name="state" data-id="{{ state.id }}">{{ state.name }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <h3>Amenities</h3>
+            <div class="popover">
+                {% for amenity in amenities %}
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" class="filter_checkbox" data-name="amenity" data-id="{{ amenity.id }}">{{ amenity.name }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="places">
+            <article>
+                <div class="title_places">
+                    <h2>Places</h2>
+                </div>
+                <div class="row">
+                    {% for city in cities %}
+                        <div class="city">
+                            <div class="box">
+                                <div class="title_box">
+                                    <h2>{{ city.name }}</h2>
+                                </div>
+                                <div class="information">
+                                    <div class="max_guest">
+                                        <div class="box">
+                                            <i class="fa fa-users fa-3x" aria-hidden="true"></i>
+                                            <br>
+                                            {{ city.max_guest }} Guests
+                                        </div>
+                                    </div>
+                                    <div class="number_rooms">
+                                        <div class="box">
+                                            <i class="fa fa-bed fa-3x" aria-hidden="true"></i>
+                                            <br>
+                                            {{ city.number_rooms }} Bedrooms
+                                        </div>
+                                    </div>
+                                    <div class="number_bathrooms">
+                                        <div class="box">
+                                            <i class="fa fa-bath fa-3x" aria-hidden="true"></i>
+                                            <br>
+                                            {{ city.number_bathrooms }} Bathrooms
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </article>
+        </section>
+    </div>
+    <footer class="full_footer">
+        <p>Footer</p>
+    </footer>
+</body>
+</html>
