@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>HBNB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/3-header.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/3-footer.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/4-common.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/6-filters.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/8-places.css') }}" type="text/css">
+</head>
+<body>
+    <header class="full_header">
+        <div class="title">
+            <h1>HBNB</h1>
+        </div>
+    </header>
+    <div class="container">
+        <section class="filters">
+            <h3>States</h3>
+            <div class="popover">
+                &nbsp;
+            </div>
+            <h3>Amenities</h3>
+            <div class="popover">
+                &nbsp;
+            </div>
+        </section>
+        <section class="places">
+            <article>
+                <div class="title_places">
+                    <h2>Places</h2>
+                </div>
+                <div class="row">
+                    {% for place in places %}
+                        <div class="city">
+                            <div class="box">
+                                <div class="title_box">
+                                    <h2>{{ place.name }}</h2>
+                                    <div class="price_by_night">
+                                        {{ place.price_by_night }} $
+                                    </div>
+                                </div>
+                                <div class="information">
+                                    <div class="max_guest">
+                                        <div class="box">
+                                            <i class="fa fa-users fa-3x" aria-hidden="true"></i>
+                                            <br>
+                                            {{ place.max_guest }} Guests
+                                        </div>
+                                    </div>
+                                    <div class="number_rooms">
+                                        <div class="box">
+                                            <i class="fa fa-bed fa-3x" aria-hidden="true"></i>
+                                            <br>
+                                            {{ place.number_rooms }} Bedrooms
+                                        </div>
+                                    </div>
+                                    <div class="number_bathrooms">
+                                        <div class="box">
+                                            <i class="fa fa-bath fa-3x" aria-hidden="true"></i>
+                                            <br>
+                                            {{ place.number_bathrooms }} Bathrooms
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </article>
+        </section>
+    </div>
+    <footer class="full_footer">
+        <p>Footer</p>
+    </footer>
+</body>
+</html>
